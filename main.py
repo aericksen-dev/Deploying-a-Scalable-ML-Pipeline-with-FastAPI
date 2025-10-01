@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 from fastapi import FastAPI
+from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
 from ml.data import apply_label, process_data
