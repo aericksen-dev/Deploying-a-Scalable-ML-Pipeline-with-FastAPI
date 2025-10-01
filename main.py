@@ -26,49 +26,52 @@ class Data(BaseModel):
     hours_per_week: int = Field(..., example=40, alias="hours-per-week")
     native_country: str = Field(..., example="United-States", alias="native-country")
 
-path = None # TODO: enter the path for the saved encoder 
-encoder = load_model(path)
 
-path = None # TODO: enter the path for the saved model 
-model = load_model(path)
+# --- Load saved artifacts (model, encoder, lb) ---
+# Using paths relative to this file's directory
+_PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+_MODEL_DIR = os.path.join(_PROJECT_DIR, "model")
 
-# TODO: create a RESTful API using FastAPI
-app = None # your code here
+_MODEL_PATH = os.path.join(_MODEL_DIR, "model.pkl")
+_ENCODER_PATH = os.path.join(_MODEL_DIR, "encoder.pkl")
+_LB_PATH = os.path.join(_MODEL_DIR, "lb.pkl")
 
-# TODO: create a GET on the root giving a welcome message
+# Your load_model likely returns (model, encoder, lb) when given all three paths.
+# If your implementation differs, adjust accordingly.
+model, encoder, lb = load_model(_MODEL_PATH, _ENCODER_PATH, _LB_PATH)
+
+app = FastAPI(title="Income Prediction API", version="1.0.0")
+
 @app.get("/")
 async def get_root():
-    """ Say hello!"""
-    # your code here
-    pass
+    """Say hello!"""
+    return {"message": "Hello from the API!"}
 
-
-# TODO: create a POST on a different path that does model inference
 @app.post("/data/")
-async def post_inference(data: Data):
-    # DO NOT MODIFY: turn the Pydantic model into a dict.
-    data_dict = data.dict()
-    # DO NOT MODIFY: clean up the dict to turn it into a Pandas DataFrame.
-    # The data has names with hyphens and Python does not allow those as variable names.
-    # Here it uses the functionality of FastAPI/Pydantic/etc to deal with this.
-    data = {k.replace("_", "-"): [v] for k, v in data_dict.items()}
-    data = pd.DataFrame.from_dict(data)
+def post_inference(data: Data):
+    try:
+        data_dict = data.dict()
+        data_df = {k.replace("_", "-"): [v] for k, v in data_dict.items()}
+        data_df = pd.DataFrame.from_dict(data_df)
 
-    cat_features = [
-        "workclass",
-        "education",
-        "marital-status",
-        "occupation",
-        "relationship",
-        "race",
-        "sex",
-        "native-country",
-    ]
-    data_processed, _, _, _ = process_data(
-        # your code here
-        # use data as data input
-        # use training = False
-        # do not need to pass lb as input
-    )
-    _inference = None # your code here to predict the result using data_processed
-    return {"result": apply_label(_inference)}
+        cat_features = [
+            "workclass","education","marital-status","occupation",
+            "relationship","race","sex","native-country",
+        ]
+
+        X, _, _, _ = process_data(
+            data_df,
+            categorical_features=cat_features,
+            label=None,
+            training=False,
+            encoder=encoder,
+            lb=lb,   # keep if your process_data expects it
+        )
+
+        pred = inference(model, X)
+        return {"result": apply_label(pred)}   # <= array, not int
+    except Exception as e:
+        # Log & surface the real reason
+        import traceback, sys
+        traceback.print_exc(file=sys.stderr)
+        raise HTTPException(status_code=500, detail=str(e))

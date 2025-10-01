@@ -1,18 +1,14 @@
-import json
-
 import requests
 
-# TODO: send a GET using the URL http://127.0.0.1:8000
-r = None # Your code here
+BASE = "http://127.0.0.1:8000"
 
-# TODO: print the status code
-# print()
-# TODO: print the welcome message
-# print()
+# GET /
+r = requests.get(f"{BASE}/")
+print("Status Code:", r.status_code)
+print("Result:", r.json().get("message"))
 
-
-
-data = {
+# POST /data/
+sample = {
     "age": 37,
     "workclass": "Private",
     "fnlgt": 178356,
@@ -28,11 +24,9 @@ data = {
     "hours-per-week": 40,
     "native-country": "United-States",
 }
-
-# TODO: send a POST using the data above
-r = None # Your code here
-
-# TODO: print the status code
-# print()
-# TODO: print the result
-# print()
+r = requests.post(f"{BASE}/data/", json=sample)
+print("Status Code:", r.status_code)
+try:
+    print("Result:", r.json().get("result"))
+except Exception:
+    print("Body:", r.text)
