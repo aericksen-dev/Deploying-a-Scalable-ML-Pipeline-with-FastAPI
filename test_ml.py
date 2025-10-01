@@ -1,9 +1,10 @@
 # test_ml.py
 from pathlib import Path
+
 import pandas as pd
 
 from ml.data import process_data
-from ml.model import train_model, inference, compute_model_metrics
+from ml.model import compute_model_metrics, inference, train_model
 
 # same list used in training (hyphenated names)
 CAT_FEATURES = [
@@ -28,7 +29,9 @@ def _load_sample(n=400, seed=0):
 
 def test_process_data_shapes():
     df = _load_sample(200, seed=1)
-    X, y, enc, lb = process_data(df, categorical_features=CAT_FEATURES, label="salary", training=True)
+    X, y, enc, lb = process_data(
+        df, categorical_features=CAT_FEATURES, label="salary", training=True
+    )
     assert X.shape[0] == y.shape[0] > 0
     assert enc is not None and lb is not None
 
@@ -38,7 +41,9 @@ def test_train_and_infer_binary():
     train = df.iloc[:350]
     test = df.iloc[350:]
     Xtr, ytr, enc, lb = process_data(train, CAT_FEATURES, label="salary", training=True)
-    Xte, yte, *_ = process_data(test, CAT_FEATURES, label="salary", training=False, encoder=enc, lb=lb)
+    Xte, yte, *_ = process_data(
+        test, CAT_FEATURES, label="salary", training=False, encoder=enc, lb=lb
+    )
     model = train_model(Xtr, ytr)
     preds = inference(model, Xte)
     assert set(preds.tolist()) <= {0, 1}

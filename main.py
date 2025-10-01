@@ -1,12 +1,12 @@
 import os
 
 import pandas as pd
-from fastapi import FastAPI
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from ml.data import apply_label, process_data
 from ml.model import inference, load_model
+
 
 # DO NOT MODIFY
 class Data(BaseModel):
@@ -43,10 +43,12 @@ model, encoder, lb = load_model(_MODEL_PATH, _ENCODER_PATH, _LB_PATH)
 
 app = FastAPI(title="Income Prediction API", version="1.0.0")
 
+
 @app.get("/")
 async def get_root():
     """Say hello!"""
     return {"message": "Hello from the API!"}
+
 
 @app.post("/data/")
 def post_inference(data: Data):
@@ -56,8 +58,14 @@ def post_inference(data: Data):
         data_df = pd.DataFrame.from_dict(data_df)
 
         cat_features = [
-            "workclass","education","marital-status","occupation",
-            "relationship","race","sex","native-country",
+            "workclass",
+            "education",
+            "marital-status",
+            "occupation",
+            "relationship",
+            "race",
+            "sex",
+            "native-country",
         ]
 
         X, _, _, _ = process_data(
@@ -66,13 +74,15 @@ def post_inference(data: Data):
             label=None,
             training=False,
             encoder=encoder,
-            lb=lb,   # keep if your process_data expects it
+            lb=lb,  # keep if your process_data expects it
         )
 
         pred = inference(model, X)
-        return {"result": apply_label(pred)}   # <= array, not int
+        return {"result": apply_label(pred)}  # <= array, not int
     except Exception as e:
         # Log & surface the real reason
-        import traceback, sys
+        import sys
+        import traceback
+
         traceback.print_exc(file=sys.stderr)
         raise HTTPException(status_code=500, detail=str(e))

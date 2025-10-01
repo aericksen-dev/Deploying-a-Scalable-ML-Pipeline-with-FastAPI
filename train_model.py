@@ -1,12 +1,16 @@
-import os
 from pathlib import Path
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from ml.data import process_data
 from ml.model import (
-    train_model, inference, compute_model_metrics,
-    performance_on_categorical_slice, save_model, load_model
+    compute_model_metrics,
+    inference,
+    load_model,
+    performance_on_categorical_slice,
+    save_model,
+    train_model,
 )
 
 # DO NOT MODIFY
@@ -45,8 +49,12 @@ if __name__ == "__main__":
         train, categorical_features=cat_features, label="salary", training=True
     )
     X_test, y_test, _, _ = process_data(
-        test, categorical_features=cat_features, label="salary",
-        training=False, encoder=encoder, lb=lb
+        test,
+        categorical_features=cat_features,
+        label="salary",
+        training=False,
+        encoder=encoder,
+        lb=lb,
     )
 
     # ---- train
@@ -63,7 +71,9 @@ if __name__ == "__main__":
 
     # ---- (optional) reload to verify artifacts (do NOT do this before saving)
     if model_path.exists() and encoder_path.exists() and lb_path.exists():
-        model, encoder, lb = load_model(str(model_path), str(encoder_path), str(lb_path))
+        model, encoder, lb = load_model(
+            str(model_path), str(encoder_path), str(lb_path)
+        )
     else:
         print("Artifacts missing after save; skipping reload.")
 
@@ -76,12 +86,12 @@ if __name__ == "__main__":
         block = performance_on_categorical_slice(
             data=test,
             feature=col,
-            values=vals,                 # <-- key fix: pass all values as an iterable
+            values=vals,  # <-- key fix: pass all values as an iterable
             process_fn=process_data,
             model=model,
             encoder=encoder,
             lb=lb,
-            categorical_features=cat_features
+            categorical_features=cat_features,
         )
         if block:
             blocks.append(block)
